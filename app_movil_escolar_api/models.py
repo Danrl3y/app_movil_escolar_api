@@ -88,19 +88,9 @@ class Eventos(models.Model):
     hora_inicio = models.TimeField(null=False, blank=False)
     hora_fin = models.TimeField(null=False, blank=False)
     lugar = models.CharField(max_length=255, null=False, blank=False, validators=[validador_alfanumerico])
-    publico_objectivo = models.CharField(max_length=50, choices=PUBLICO_OBJETIVO.choices, null=False, blank=False)
+    publico_objetivo = models.CharField(max_length=50, choices=PUBLICO_OBJETIVO.choices, null=False, blank=False)
     programa_educativo = models.CharField(max_length=50, choices=PROGRAMAS_EDUCATIVOS.choices, null=True, blank=True)
     responsable = models.CharField(max_length=255, null=False, blank=False)
     descripcion =models.TextField(max_length=300, null=False, blank=False, validators=[validador_puntuacion])
     cupo_max = models.IntegerField(null=False, blank=False, validators=[MinValueValidator(1), MaxValueValidator(300)])
-
-    def clean(self):
-        super().clean()
-
-        if self.hora_inicio and self.hora_fin:
-            
-            if self.hora_inicio > self.hora_fin:
-                raise ValidationError({
-                    'hora_fin': 'La hora de fin debe ser posterior a la hora de inicio.'
-                })
 
