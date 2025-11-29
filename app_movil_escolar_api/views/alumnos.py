@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db.models import *
 from django.db import transaction
 from app_movil_escolar_api.serializers import UserSerializer
@@ -8,6 +9,7 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from django.contrib.auth.models import Group
+from django.shortcuts import get_object_or_404
 
 #Esta funcion regresa todos los alumnos registrados 
 class AlumnosAll(generics.CreateAPIView):
@@ -20,6 +22,27 @@ class AlumnosAll(generics.CreateAPIView):
         return Response(lista, 200)
     
 class AlumnosView(generics.CreateAPIView):
+
+    # Verifica que el usuario esté autenticado
+    
+    def get_permissions(self):
+
+        if self.request.method == 'POST':
+            # Si es un POST (registro), permite que CUALQUIERA lo haga.
+            return [permissions.AllowAny()]
+        
+        # Para cualquier otro método (GET, PUT),
+        # exige que el usuario esté autenticado (tenga token).
+        return [permissions.IsAuthenticated()]
+    
+    #Obtener usuario por ID
+    def get(self, request, *args, **kwargs):
+        
+        alumno = get_object_or_404(Alumnos, id = request.GET.get("id"))
+        alumno = AlumnoSerializer(alumno, many=False).data
+        # Si todo es correcto, regresamos la información
+        return Response(alumno, 200)
+
     #Registrar nuevo usuario
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -67,3 +90,37 @@ class AlumnosView(generics.CreateAPIView):
             return Response({"Alumno creado con ID= ": alumno.id }, 201)
 
         return Response(user.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Actualizar datos del alumno
+    @transaction.atomic
+    def put(self, request, *args, **kwargs):
+        permission_classes = (permissions.IsAuthenticated,)
+        # Primero obtenemos el alumno a actualizar
+        alumno = get_object_or_404(Alumnos, id=request.data["id"])
+        alumno.matricula = request.data["matricula"]
+        alumno.curp = request.data["curp"]
+        alumno.rfc = request.data["rfc"]
+        alumno.fecha_nacimiento = request.data["fecha_nacimiento"]
+        alumno.edad = request.data["edad"]
+        alumno.telefono = request.data["telefono"]
+        alumno.ocupacion = request.data["ocupacion"]
+        alumno.update = datetime.now()
+        alumno.save()
+        # Actualizamos los datos del usuario asociado (tabla auth_user de Django)
+        user = alumno.user
+        user.first_name = request.data["first_name"]
+        user.last_name = request.data["last_name"]
+        user.save()
+        
+        return Response({"message": "Alumno actualizado correctamente", "alumno": AlumnoSerializer(alumno).data}, 200)
+        # return Response(user,200)
+
+    @transaction.atomic
+    def delete(self, request, *args, **kwargs):
+        print("Eliminar alumno ID=", request.GET.get("id"))
+        alumno = get_object_or_404(Alumnos, id=request.GET.get("id"))
+        try:
+            alumno.user.delete()
+            return Response({"details":"Alumno eliminado"},200)
+        except Exception as e:
+            return Response({"details":"Algo pasó al eliminar"},400)

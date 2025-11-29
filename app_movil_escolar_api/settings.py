@@ -1,4 +1,8 @@
 import os
+import dj_database_url
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -36,8 +40,16 @@ MIDDLEWARE = [
 # Configuración de CORS: define orígenes permitidos y quita CORS_ORIGIN_ALLOW_ALL
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
+    "http://127.0.0.1:4200",
 ]
+
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:4200", # El origen de tu frontend
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+]
 
 ROOT_URLCONF = 'app_movil_escolar_api.urls'
 
@@ -72,13 +84,10 @@ TEMPLATES = [
 WSGI_APPLICATION = 'app_movil_escolar_api.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file': os.path.join(BASE_DIR, "my.cnf"),
-            'charset': 'utf8mb4',
-        }
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [

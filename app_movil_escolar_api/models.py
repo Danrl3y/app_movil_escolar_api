@@ -10,6 +10,10 @@ from django.contrib.auth.models import User
 
 from rest_framework.authentication import TokenAuthentication
 
+from django.core.validators import MinValueValidator, MaxValueValidator
+from .validatos import validar_fecha_no_pasada, validador_alfanumerico, validador_puntuacion
+from django.core.exceptions import ValidationError
+
 class BearerTokenAuthentication(TokenAuthentication):
     keyword = "Bearer"
 
@@ -58,4 +62,45 @@ class Maestros(models.Model):
     update = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return "Perfil del maestro "+self.user.first_name+" "+self.user.last_name   
+        return "Perfil del maestro "+self.user.first_name+" "+self.user.last_name 
+
+class Eventos(models.Model):
+
+    class TIPOS_EVENTOS(models.TextChoices):
+        CONFERENCIA = 'conferencia', 'Conferencia'
+        TALLER = 'taller', 'Taller'
+        SEMINARIO = 'seminario', 'Seminario'
+        CONCURSO = 'concurso', 'Concurso'
+    
+    class PUBLICO_OBJETIVO(models.TextChoices):
+        ALUMNOS = 'alumnos', 'Alumnos'
+        MAESTROS = 'maestros', 'Maestros'
+        PUBLICO_GENERAL = 'publico_general', 'Público General'
+
+    class PROGRAMAS_EDUCATIVOS(models.TextChoices):
+        INGENIERIA_CIENCIAS_COMPUTACION = 'ingenieria_ciencias_computacion', 'Ingeniería en Ciencias de la Computación'
+        LICENCIATURA_CIENCIAS_COMPUTACION = 'licenciatura_ciencias_computacion', 'Licenciatura en Ciencias de la Computación'
+        INGENIERIA_TECNOLOGIAS_INFORMACION = 'ingenieria_tecnologias_informacion', 'Ingeniería en Tecnologías de la Información'
+
+    nombre = models.CharField(max_length=255, null=False, blank=False, validators=[validador_alfanumerico])
+    tipo = models.CharField(max_length=50, choices=TIPOS_EVENTOS.choices, null=False, blank=False)
+    fecha = models.DateField(null=False, blank=False, validators=[validar_fecha_no_pasada])
+    hora_inicio = models.TimeField(null=False, blank=False)
+    hora_fin = models.TimeField(null=False, blank=False)
+    lugar = models.CharField(max_length=255, null=False, blank=False, validators=[validador_alfanumerico])
+    publico_objectivo = models.CharField(max_length=50, choices=PUBLICO_OBJETIVO.choices, null=False, blank=False)
+    programa_educativo = models.CharField(max_length=50, choices=PROGRAMAS_EDUCATIVOS.choices, null=True, blank=True)
+    responsable = models.CharField(max_length=255, null=False, blank=False)
+    descripcion =models.TextField(max_length=300, null=False, blank=False, validators=[validador_puntuacion])
+    cupo_max = models.IntegerField(null=False, blank=False, validators=[MinValueValidator(1), MaxValueValidator(300)])
+
+    def clean(self):
+        super().clean()
+
+        if self.hora_inicio and self.hora_fin:
+            
+            if self.hora_inicio > self.hora_fin:
+                raise ValidationError({
+                    'hora_fin': 'La hora de fin debe ser posterior a la hora de inicio.'
+                })
+

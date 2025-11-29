@@ -1,3 +1,4 @@
+import datetime
 from django.db.models import *
 from django.db import transaction
 from app_movil_escolar_api.serializers import UserSerializer
@@ -27,6 +28,23 @@ class MaestrosAll(generics.CreateAPIView):
         return Response(lista, 200)
     
 class MaestrosView(generics.CreateAPIView):
+
+    # Verifica que el usuario esté autenticado
+    def get_permissions(self):
+
+        if self.request.method == 'POST':
+            return [permissions.AllowAny()]
+        
+        return [permissions.IsAuthenticated()]
+
+    #Obtener usuario por ID
+    def get(self, request, *args, **kwargs):
+        
+        maestro = get_object_or_404(Maestros, id = request.GET.get("id"))
+        maestro = MaestroSerializer(maestro, many=False).data
+        # Si todo es correcto, regresamos la información
+        return Response(maestro, 200)
+
     #Registrar nuevo usuario maestro
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -66,8 +84,32 @@ class MaestrosView(generics.CreateAPIView):
         return Response(user.errors, status=status.HTTP_400_BAD_REQUEST)
     
     # Actualizar datos del maestro
-    # TODO: Agregar actualización de maestros
+    
+    @transaction.atomic
+    def put(self, request, *args, **kwargs):
+        permission_classes = (permissions.IsAuthenticated,)
+        # Primero obtenemos el maestro a actualizar
+        maestro = get_object_or_404(Maestros, id=request.data["id"])
+        maestro.id_trabajador = request.data["id_trabajador"]
+        maestro.fecha_nacimiento = request.data["fecha_nacimiento"]
+        maestro.telefono = request.data["telefono"]
+        maestro.rfc = request.data["rfc"]
+        maestro.cubiculo = request.data["cubiculo"]
+        maestro.area_investigacion = request.data["area_investigacion"]
+        maestro.materias_json = json.dumps(request.data["materias_json"])
+        maestro.update = datetime.datetime.now()
+        maestro.save()
+        # Actualizamos los datos del usuario asociado (tabla auth_user de Django)
+        user = maestro.user
+        user.first_name = request.data["first_name"]
+        user.last_name = request.data["last_name"]
+        user.save()
+        
+        return Response({"message": "Maestro actualizado correctamente", "maestro": MaestroSerializer(maestro).data}, 200)
+        # return Response(user,200)
+
     # Eliminar maestro con delete (Borrar realmente)
+
     @transaction.atomic
     def delete(self, request, *args, **kwargs):
         maestro = get_object_or_404(Maestros, id=request.GET.get("id"))

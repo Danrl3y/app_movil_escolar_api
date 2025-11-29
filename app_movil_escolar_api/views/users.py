@@ -1,3 +1,4 @@
+import datetime 
 from django.db.models import *
 from django.db import transaction
 from app_movil_escolar_api.serializers import UserSerializer
@@ -23,8 +24,19 @@ class AdminAll(generics.CreateAPIView):
 class AdminView(generics.CreateAPIView):
     #Obtener usuario por ID
     # Verifica que el usuario esté autenticado
-    permission_classes = (permissions.IsAuthenticated,)
+    
+    def get_permissions(self):
+
+        if self.request.method == 'POST':
+            # Si es un POST (registro), permite que CUALQUIERA lo haga.
+            return [permissions.AllowAny()]
+        
+        # Para cualquier otro método (GET, PUT),
+        # exige que el usuario esté autenticado (tenga token).
+        return [permissions.IsAuthenticated()]
+
     def get(self, request, *args, **kwargs):
+        
         admin = get_object_or_404(Administradores, id = request.GET.get("id"))
         admin = AdminSerializer(admin, many=False).data
         # Si todo es correcto, regresamos la información
@@ -89,6 +101,7 @@ class AdminView(generics.CreateAPIView):
         admin.rfc = request.data["rfc"]
         admin.edad = request.data["edad"]
         admin.ocupacion = request.data["ocupacion"]
+        admin.update = datetime.datetime.now()
         admin.save()
         # Actualizamos los datos del usuario asociado (tabla auth_user de Django)
         user = admin.user
@@ -98,3 +111,12 @@ class AdminView(generics.CreateAPIView):
         
         return Response({"message": "Administrador actualizado correctamente", "admin": AdminSerializer(admin).data}, 200)
         # return Response(user,200)
+
+    @transaction.atomic
+    def delete(self, request, *args, **kwargs):
+        administrador = get_object_or_404(Administradores, id=request.GET.get("id"))
+        try:
+            administrador.user.delete()
+            return Response({"details":"Administrador eliminado"},200)
+        except Exception as e:
+            return Response({"details":"Algo pasó al eliminar"},400)
