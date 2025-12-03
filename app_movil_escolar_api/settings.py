@@ -42,6 +42,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
     "http://127.0.0.1:4200",
+    "https://app-movil-escolar-webapp.netlify.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -50,6 +51,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:4200", # El origen de tu frontend
     "http://127.0.0.1:8000",
     "http://localhost:8000",
+    "https://app-movil-escolar-webapp.netlify.app",
 ]
 
 ROOT_URLCONF = 'app_movil_escolar_api.urls'
