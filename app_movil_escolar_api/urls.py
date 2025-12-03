@@ -36,6 +36,9 @@ urlpatterns = [
         path('eventos/opciones/', eventos.EventoOpcionesView.as_view()),
         path('lista-eventos/', eventos.EventosAll.as_view()),
         path('eventos/', eventos.EventosView.as_view()),
+
+        #Total Users
+        path('total-usuarios/', users.TotalUsers.as_view()),
 ]
 
 if settings.DEBUG:
