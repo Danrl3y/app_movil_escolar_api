@@ -92,5 +92,5 @@ class Eventos(models.Model):
     programa_educativo = models.CharField(max_length=50, choices=PROGRAMAS_EDUCATIVOS.choices, null=True, blank=True)
     responsable = models.CharField(max_length=255, null=False, blank=False)
     descripcion =models.TextField(max_length=300, null=False, blank=False, validators=[validador_puntuacion])
-    cupo_max = models.IntegerField(null=False, blank=False, validators=[MinValueValidator(1), MaxValueValidator(300)])
+    cupo_max = models.IntegerField(null=False, blank=False, validators=[MinValueValidator(1), MaxValueValidator(999)])
 
