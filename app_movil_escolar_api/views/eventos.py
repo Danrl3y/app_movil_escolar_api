@@ -42,7 +42,7 @@ class EventosAll(APIView):
             
         elif es_maestro(user): 
             eventos = Eventos.objects.filter(
-                publico_objectivo__in=[
+                publico_objetivo__in=[
                     Eventos.PUBLICO_OBJETIVO.MAESTROS, 
                     Eventos.PUBLICO_OBJETIVO.PUBLICO_GENERAL
                 ]
@@ -50,7 +50,7 @@ class EventosAll(APIView):
             
         elif es_alumno(user):
             eventos = Eventos.objects.filter(
-                publico_objectivo__in=[
+                publico_objetivo__in=[
                     Eventos.PUBLICO_OBJETIVO.ALUMNOS, 
                     Eventos.PUBLICO_OBJETIVO.PUBLICO_GENERAL
                 ]
